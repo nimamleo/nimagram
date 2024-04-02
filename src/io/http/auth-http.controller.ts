@@ -51,7 +51,7 @@ export class AuthHttpController {
       username: body.username,
       bio: undefined,
       avatar: undefined,
-      lastOnline: undefined,
+      lastOnline: new Date(),
       rfToken: '',
       contacts: [],
       blockedUsers: [],

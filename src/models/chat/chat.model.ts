@@ -15,7 +15,7 @@ export interface IChat {
   type: ChatType;
   deletedBy: Partial<IUserEntity>;
   conversation: Partial<IConversationEntity>;
-  seenBy: Partial<IUserEntity>[];
+  // seenBy: Partial<IUserEntity>[];
 }
 
 export interface IChatEntity extends IChat, IDated, IEntity, IDeletable {}

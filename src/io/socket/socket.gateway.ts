@@ -299,7 +299,6 @@ export class SocketGateway
         isDeleted: false,
         sender: { id: user.id },
         conversation: { id: msg.conversationId },
-        seenBy: [],
         deletedBy: undefined,
       },
     );
@@ -518,7 +517,6 @@ export class SocketGateway
         sender: { id: user.id },
         conversation: { id: msg.conversationId },
         deletedBy: undefined,
-        seenBy: [],
       },
     );
 

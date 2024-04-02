@@ -1,37 +1,35 @@
 import { Module } from '@nestjs/common';
-import { PrismaModule } from '../../../prisma/prisma.module';
 import { USER_DATABASE_PROVIDER } from './provider/user/user.provider';
 import { UserPgsqlService } from './pgsql/user/user-pgsql.service';
 import { CONVERSATION_DATABASE_PROVIDER } from './provider/chat/conversation.provider';
 import { ConversationPgsqlService } from './pgsql/chat/conversation-pgsql.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { UserEntity } from './pgsql/user/entities/typeOrm/user.entity';
-import { BlockEntity } from './pgsql/user/entities/typeOrm/block.entity';
-import { ConversationEntity } from './pgsql/chat/entities/typeOrm/conversation.entity';
-import { ChatEntity } from './pgsql/chat/entities/typeOrm/chat.entity';
-import { ConversationMemberEntity } from './pgsql/chat/entities/typeOrm/conversation-member.entity';
-import { ContactEntity } from './pgsql/user/entities/typeOrm/contact.entity';
+import { UserEntity } from './pgsql/user/entities/user.entity';
+import { ChatEntity } from './pgsql/chat/entities/chat.entity';
+import { ConversationEntity } from './pgsql/chat/entities/conversation.entity';
+import { ConversationMemberEntity } from './pgsql/chat/entities/conversation-member.entity';
+import { ContactEntity } from './pgsql/user/entities/contact.entity';
+import { UserBlockEntity } from './pgsql/user/entities/user-block.entity';
 
 @Module({
   imports: [
-    PrismaModule,
     TypeOrmModule.forRoot({
       type: 'postgres',
       host: '127.0.0.1',
       port: 5432,
       username: 'postgres',
       password: 'root',
-      database: 'chat_typeorm',
+      database: 'nimagram_typeorm',
       entities: [
         UserEntity,
         ChatEntity,
         ConversationEntity,
         ConversationMemberEntity,
         ContactEntity,
-        BlockEntity,
+        UserBlockEntity,
       ],
       synchronize: true,
-      autoLoadEntities: true,
+      // autoLoadEntities: true,
     }),
     TypeOrmModule.forFeature([
       UserEntity,
@@ -39,7 +37,7 @@ import { ContactEntity } from './pgsql/user/entities/typeOrm/contact.entity';
       ConversationEntity,
       ConversationMemberEntity,
       ContactEntity,
-      BlockEntity,
+      UserBlockEntity,
     ]),
   ],
   providers: [

@@ -1,136 +1,45 @@
 import { Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { UserEntity } from './entities/user.entity';
 import { IUserProvider } from '../../provider/user/user.provider';
 import { IUser, IUserEntity } from '../../../../models/user/user.model';
-import { PrismaService } from '../../../../../prisma/prisma.service';
-import { HandleError } from '../../../../common/decorators/handler-error.decorator';
 import { Err, Ok, Result } from '../../../../common/result';
-import { fromIUser, toIUserEntity } from './entities/user-prisma.entity';
+import { HandleError } from '../../../../common/decorators/handler-error.decorator';
 import { GenericErrorCode } from '../../../../common/errors/generic-error';
-import { toIConversationEntity } from '../chat/entities/conversation.entity';
-import { Prisma } from '@prisma/client';
-import { InjectRepository } from '@nestjs/typeorm';
-import { UserEntity } from './entities/typeOrm/user.entity';
-import { Repository } from 'typeorm';
+import { ContactEntity } from './entities/contact.entity';
 
 @Injectable()
 export class UserPgsqlService implements IUserProvider {
   constructor(
-    private readonly prisma: PrismaService,
     @InjectRepository(UserEntity)
     private readonly userRepository: Repository<UserEntity>,
+    @InjectRepository(ContactEntity)
+    private readonly contactRepository: Repository<ContactEntity>,
   ) {}
+
   @HandleError
   async createUser(iUser: IUser): Promise<Result<IUserEntity>> {
-    const newUser = fromIUser(iUser);
-    const res = await this.prisma.user.create({ data: { ...newUser } });
+    const newUser = UserEntity.fromIUser(iUser);
+    const res = await this.userRepository.save(newUser);
     if (!res) {
-      return Err('create user failed', GenericErrorCode.INTERNAL);
+      return Err('create user failed');
     }
-
-    return Ok(toIUserEntity(res));
+    return Ok(UserEntity.toIUserEntity(res));
   }
 
   @HandleError
   async getUser(phone: string): Promise<Result<IUserEntity>> {
-    const res = await this.prisma.user.findUnique({
-      where: { phone: phone },
-      include: {
-        conversations: {
-          select: {
-            conversation: {
-              select: { id: true },
-            },
-          },
-        },
-      },
-    });
+    const res = await this.userRepository
+      .createQueryBuilder('u')
+      .where('u.phone = :phone', { phone: phone })
+      .getOne();
+
     if (!res) {
       return Err('user not found', GenericErrorCode.NOT_FOUND);
     }
 
-    const user: IUserEntity = toIUserEntity({
-      id: res.id,
-      name: res.name,
-      username: res.name,
-      bio: res.bio,
-      avatar: res.avatar,
-      phone: res.phone,
-      lastOnline: res.lastOnline,
-      createdAt: res.createdAt,
-      updatedAt: res.updatedAt,
-    });
-
-    user.conversations = res.conversations.map((x) => {
-      return {
-        id: x.conversation.id.toString(),
-      };
-    });
-
-    return Ok(user);
-  }
-
-  @HandleError
-  async addContact(
-    userId: string,
-    targetUserId: string,
-  ): Promise<Result<boolean>> {
-    const res = await this.prisma.contacts.create({
-      data: { userId: +userId, contactId: +targetUserId },
-    });
-    if (!res) {
-      return Err('create contact failed');
-    }
-    return Ok(true);
-  }
-
-  @HandleError
-  async getContactList(userId: string): Promise<Result<string[]>> {
-    const res = await this.prisma.user.findFirst({
-      where: { id: +userId },
-      include: { contacts: true },
-    });
-
-    return Ok(res.contacts.map((x) => x.contactId.toString()));
-  }
-
-  @HandleError
-  async addBlock(
-    userId: string,
-    targetUserId: string,
-  ): Promise<Result<boolean>> {
-    const res = await this.prisma.blockUsers.create({
-      data: {
-        blockerId: +userId,
-        blockedId: +targetUserId,
-      },
-    });
-    if (!res) {
-      return Err('block user failed');
-    }
-    return Ok(true);
-  }
-
-  @HandleError
-  async getBlockList(userId: string): Promise<Result<string[]>> {
-    const res = await this.prisma.user.findFirst({
-      where: { id: +userId },
-      include: { blockerUsers: true },
-    });
-    return Ok(res.blockerUsers.map((x) => x.blockedId.toString()));
-  }
-
-  @HandleError
-  async getUserById(id: string): Promise<Result<IUserEntity>> {
-    const res = await this.prisma.user.findUnique({
-      where: {
-        id: +id,
-      },
-    });
-    if (!res) {
-      return Err('user not found', GenericErrorCode.NOT_FOUND);
-    }
-
-    return Ok(toIUserEntity(res));
+    return Ok(UserEntity.toIUserEntity(res));
   }
 
   @HandleError
@@ -138,23 +47,79 @@ export class UserPgsqlService implements IUserProvider {
     userId: string,
     iUSer: Partial<IUser>,
   ): Promise<Result<IUserEntity>> {
-    const res = await this.prisma.user.update({
-      where: { id: +userId },
-      data: {
-        name: iUSer?.name,
-        bio: iUSer?.bio,
-        avatar: iUSer?.avatar,
-        rfToken: iUSer?.rfToken,
-      },
+    const newData = UserEntity.fromIUser({
+      name: iUSer.name,
+      avatar: iUSer.avatar,
+      rfToken: iUSer.rfToken,
+      bio: iUSer.bio,
+      contacts: [],
+      conversations: [],
+      blockedUsers: [],
+      phone: null,
+      lastOnline: null,
+      username: null,
     });
-    if (!res) {
-      return Err('updated user failed', GenericErrorCode.INTERNAL);
+    const res = await this.userRepository
+      .createQueryBuilder('u')
+      .update(UserEntity)
+      .set({
+        rfToken: newData.rfToken,
+        name: newData.name,
+        avatar: newData.avatar,
+        bio: newData.bio,
+      })
+      .where('id = :userId', { userId: userId })
+      .returning('*')
+      .updateEntity(true)
+      .execute();
+    if (res.affected === 0) {
+      return Err('updated user failed');
     }
+    return Ok(UserEntity.toIUserEntity(res.raw[0]));
+  }
 
-    return Ok(toIUserEntity(res));
+  getUserById(id: string): Promise<Result<IUserEntity>> {
+    return;
   }
 
   createMany(): Promise<Result<any>> {
     return;
+  }
+
+  @HandleError
+  async addContact(
+    userId: string,
+    targetUserId: string,
+  ): Promise<Result<boolean>> {
+    const addContact = this.contactRepository.create({
+      user: { id: +userId },
+      contact: { id: +targetUserId },
+    });
+
+    const res = await addContact.save();
+    if (!res) {
+      return Err('add contact failed');
+    }
+
+    return Ok(true);
+  }
+  getBlockList(userId: string): Promise<Result<string[]>> {
+    return;
+  }
+  addBlock(userId: string, targetUserId: string): Promise<Result<boolean>> {
+    return;
+  }
+
+  @HandleError
+  async getContactList(userId: string): Promise<Result<string[]>> {
+    const res = await this.userRepository
+      .createQueryBuilder('u')
+      .innerJoinAndSelect('u.contacts', 'c', 'u.id = :userId', {
+        userId: +userId,
+      })
+      .getMany();
+
+    console.log(res);
+    return Ok(res.map((x) => x?.id.toString()));
   }
 }
