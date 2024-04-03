@@ -28,13 +28,13 @@ export class ConversationPgsqlService implements IConversationProvider {
     userId: string,
     targetUserId: string,
   ): Promise<Result<IConversationEntity>> {
-    const res = await this.conversationRepository
-      .createQueryBuilder('c')
-      .leftJoinAndSelect('c.members', 'cm')
-      .where('cm.userId = :userId', { userId: 1222 })
-      .andWhere('cm.userId = :userId', { userId: +targetUserId })
-      .andWhere('c.type = :type', { type: ConversationType.DIRECT })
-      .getOne();
+    const res = await this.conversationMemberRepository
+      .createQueryBuilder('cm')
+      .leftJoinAndSelect('cm.conversation', 'c')
+      .select(['cm.conversationId'])
+      // .where('cm.userId IN (:...ids)', { ids: [+userId, +targetUserId] })
+      // .groupBy('cm.conversationId')
+      .getMany();
     console.log(res);
     return;
   }
