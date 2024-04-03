@@ -1,14 +1,14 @@
 import { BaseEntity, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
 import { UserEntity } from './user.entity';
 
-@Entity({ name: 'contact' })
+@Entity('contacts')
 export class ContactEntity extends BaseEntity {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @ManyToOne(() => UserEntity, (user) => user.userContacts)
+  @ManyToOne(() => UserEntity, (user) => user.contacts)
   user: UserEntity;
 
-  @ManyToOne(() => UserEntity, (contact) => contact.contacts)
+  @ManyToOne(() => UserEntity, (user) => user.userContacts)
   contact: UserEntity;
 }

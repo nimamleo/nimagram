@@ -32,7 +32,7 @@ export class AuthService implements IAuthProvider {
         phone: iUser.phone,
         username: iUser.username,
       },
-      { secret: this.jwtConfig.secret, expiresIn: '1h' },
+      { secret: this.jwtConfig.secret, expiresIn: '1d' },
     );
 
     const rftoken = this.jwtService.sign(

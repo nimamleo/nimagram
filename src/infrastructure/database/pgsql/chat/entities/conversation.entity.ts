@@ -2,6 +2,8 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  JoinTable,
+  ManyToMany,
   OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
@@ -9,11 +11,12 @@ import {
 import { ConversationType } from '../../../../../enum/conversation-type';
 import { CoreEntity } from '../../entity';
 import { ChatEntity } from './chat.entity';
-import { ConversationMemberEntity } from './conversation-member.entity';
 import {
   IConversation,
   IConversationEntity,
 } from '../../../../../models/chat/conversation.model';
+import { UserEntity } from '../../user/entities/user.entity';
+import { ConversationMemberEntity } from './conversation-member.entity';
 
 @Entity({ name: 'conversation' })
 export class ConversationEntity extends CoreEntity {

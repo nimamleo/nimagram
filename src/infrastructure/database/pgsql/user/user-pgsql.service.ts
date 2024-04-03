@@ -8,6 +8,7 @@ import { Err, Ok, Result } from '../../../../common/result';
 import { HandleError } from '../../../../common/decorators/handler-error.decorator';
 import { GenericErrorCode } from '../../../../common/errors/generic-error';
 import { ContactEntity } from './entities/contact.entity';
+import { UserBlockEntity } from './entities/user-block.entity';
 
 @Injectable()
 export class UserPgsqlService implements IUserProvider {
@@ -16,6 +17,8 @@ export class UserPgsqlService implements IUserProvider {
     private readonly userRepository: Repository<UserEntity>,
     @InjectRepository(ContactEntity)
     private readonly contactRepository: Repository<ContactEntity>,
+    @InjectRepository(UserBlockEntity)
+    private readonly blockRepository: Repository<UserBlockEntity>,
   ) {}
 
   @HandleError
@@ -78,8 +81,16 @@ export class UserPgsqlService implements IUserProvider {
     return Ok(UserEntity.toIUserEntity(res.raw[0]));
   }
 
-  getUserById(id: string): Promise<Result<IUserEntity>> {
-    return;
+  @HandleError
+  async getUserById(id: string): Promise<Result<IUserEntity>> {
+    const res = await this.userRepository
+      .createQueryBuilder('u')
+      .where('u.id = :userId', { userId: +id })
+      .getOne();
+    if (!res) {
+      return Err('user not found', GenericErrorCode.NOT_FOUND);
+    }
+    return Ok(UserEntity.toIUserEntity(res));
   }
 
   createMany(): Promise<Result<any>> {
@@ -103,23 +114,46 @@ export class UserPgsqlService implements IUserProvider {
 
     return Ok(true);
   }
-  getBlockList(userId: string): Promise<Result<string[]>> {
-    return;
+
+  @HandleError
+  async getBlockList(userId: string): Promise<Result<string[]>> {
+    const res = await this.userRepository
+      .createQueryBuilder('u')
+      .leftJoinAndSelect('u.blockedUsers', 'uBlocked')
+      .leftJoinAndSelect('uBlocked.blocked', 'ub')
+      .where('u.id = :userId', { userId: +userId })
+      .getOne();
+    return Ok(res?.blockedUsers?.map((x) => x?.blocked?.id.toString()));
   }
-  addBlock(userId: string, targetUserId: string): Promise<Result<boolean>> {
-    return;
+
+  @HandleError
+  async addBlock(
+    userId: string,
+    targetUserId: string,
+  ): Promise<Result<boolean>> {
+    const addBlock = this.blockRepository.create({
+      blocked: { id: +targetUserId },
+      blocker: { id: +userId },
+    });
+
+    const res = await addBlock.save();
+
+    if (!res) {
+      return Err('add block failed');
+    }
+
+    return Ok(true);
   }
 
   @HandleError
   async getContactList(userId: string): Promise<Result<string[]>> {
     const res = await this.userRepository
       .createQueryBuilder('u')
-      .innerJoinAndSelect('u.contacts', 'c', 'u.id = :userId', {
-        userId: +userId,
-      })
-      .getMany();
+      .leftJoinAndSelect('u.contacts', 'c')
+      .leftJoinAndSelect('c.contact', 'uc')
+      .where('u.id = :userId', { userId })
+      .getOne();
 
-    console.log(res);
-    return Ok(res.map((x) => x?.id.toString()));
+    return Ok(res?.contacts?.map((x) => x?.contact?.id.toString()));
   }
 }

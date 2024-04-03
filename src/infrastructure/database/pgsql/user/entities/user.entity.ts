@@ -12,7 +12,6 @@ import { ContactEntity } from './contact.entity';
 import { ConversationMemberEntity } from '../../chat/entities/conversation-member.entity';
 import { IUser, IUserEntity } from '../../../../../models/user/user.model';
 import { ChatEntity } from '../../chat/entities/chat.entity';
-import { closeHandler } from 'ioredis/built/redis/event_handler';
 
 @Entity({ name: 'user' })
 export class UserEntity extends CoreEntity {
@@ -40,20 +39,20 @@ export class UserEntity extends CoreEntity {
   @Column()
   rfToken: string;
 
-  @OneToMany(() => UserBlockEntity, (blockerUser) => blockerUser.blocker)
-  blockerUsers: UserBlockEntity[];
-
-  @OneToMany(() => UserBlockEntity, (blockedUser) => blockedUser.blocked)
+  @OneToMany(() => UserBlockEntity, (x) => x.blocker)
   blockedUsers: UserBlockEntity[];
 
-  @OneToMany(() => ContactEntity, (x) => x.user)
-  userContacts: ContactEntity[];
+  @OneToMany(() => UserBlockEntity, (x) => x.blocked)
+  blockerUsers: UserBlockEntity[];
 
-  @OneToMany(() => ContactEntity, (x) => x.contact)
+  @OneToMany(() => ContactEntity, (userContact) => userContact.user)
   contacts: ContactEntity[];
 
+  @OneToMany(() => ContactEntity, (userContact) => userContact.contact)
+  userContacts: ContactEntity[];
+
   @OneToMany(() => ConversationMemberEntity, (x) => x.user)
-  conversationMembers: ConversationMemberEntity[];
+  conversations: ConversationMemberEntity[];
 
   @OneToMany(() => ChatEntity, (chat) => chat.sender)
   chats: ChatEntity[];

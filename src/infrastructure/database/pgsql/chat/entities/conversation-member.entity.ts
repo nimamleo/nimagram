@@ -2,7 +2,7 @@ import { BaseEntity, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
 import { ConversationEntity } from './conversation.entity';
 import { UserEntity } from '../../user/entities/user.entity';
 
-@Entity({ name: 'conversation_members' })
+@Entity('conversationMembers')
 export class ConversationMemberEntity extends BaseEntity {
   @PrimaryGeneratedColumn()
   id: number;
@@ -10,6 +10,6 @@ export class ConversationMemberEntity extends BaseEntity {
   @ManyToOne(() => ConversationEntity, (conversation) => conversation.members)
   conversation: ConversationEntity;
 
-  @ManyToOne(() => UserEntity, (user) => user.conversationMembers)
+  @ManyToOne(() => UserEntity, (user) => user.conversations)
   user: UserEntity;
 }
