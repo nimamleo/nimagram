@@ -62,6 +62,14 @@ export class ConversationService {
     if (res.isError()) {
       return Err(res.err, GenericErrorCode.INTERNAL);
     }
+    console.log(res);
+
+    // res.value.map(
+    //   async (x) =>
+    //     await this.conversationRepository.getConversationReverse(x.id, userId),
+    // );
+
+    console.log(res);
 
     // const nima = this.conversationRepository.getUnSeenCount(res.value[0].id);
 

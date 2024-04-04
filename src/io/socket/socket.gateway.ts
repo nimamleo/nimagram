@@ -183,7 +183,7 @@ export class SocketGateway
       msg.targetId,
       {
         name: targetUser.value.name,
-        description: undefined,
+        description: null,
         type: ConversationType.DIRECT,
         notSeen: 0,
         image: targetUser.value.avatar,

@@ -29,7 +29,7 @@ export class ConversationEntity extends CoreEntity {
   @Column({ nullable: true })
   image?: string;
 
-  @Column()
+  @Column({ nullable: true })
   description?: string;
 
   @Column({ type: 'enum', enum: ConversationType })

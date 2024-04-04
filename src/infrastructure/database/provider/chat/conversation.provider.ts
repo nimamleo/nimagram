@@ -21,7 +21,10 @@ export interface IConversationReader {
   getConversationById(
     conversationId: string,
   ): Promise<Result<IConversationEntity>>;
-  // getUnSeenCount(conversationId: string): Promise<Result<IConversationEntity>>;
+  getConversationReverse(
+    conversationId: string,
+    userId: string,
+  ): Promise<Result<IConversationEntity>>;
 }
 export interface IConversationWriter {
   startConversation(
