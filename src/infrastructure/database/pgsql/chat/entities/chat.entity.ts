@@ -29,20 +29,20 @@ export class ChatEntity extends CoreEntity {
   @Column()
   isDeleted: boolean;
 
-  @Column()
+  @Column({ nullable: true })
   filePath: string;
 
   @Column({ type: 'enum', enum: ChatType })
   type: ChatType;
 
   @ManyToOne(() => ConversationEntity, (conversation) => conversation.chats)
-  conversation: ConversationEntity;
+  conversation: Partial<ConversationEntity>;
 
   @ManyToOne(() => UserEntity, (user) => user.chats)
-  sender: UserEntity;
+  sender: Partial<UserEntity>;
 
   @ManyToOne(() => UserEntity, (user) => user.deletedChats)
-  deletedBy: UserEntity;
+  deletedBy: Partial<UserEntity>;
 
   @CreateDateColumn()
   createdAt: Date;
@@ -50,7 +50,7 @@ export class ChatEntity extends CoreEntity {
   @UpdateDateColumn()
   updatedAt: Date;
 
-  @Column({ type: 'timestamp' })
+  @Column({ type: 'timestamp', nullable: true })
   deletedAt: Date;
 
   static fromIChat(iChat: IChat): ChatEntity {
@@ -66,6 +66,8 @@ export class ChatEntity extends CoreEntity {
     chat.isDeleted = iChat.isDeleted;
     chat.filePath = iChat.filePath;
     chat.type = iChat.type;
+    chat.conversation = { id: +iChat.conversation.id };
+    chat.sender = { id: +iChat.sender.id };
 
     return chat;
   }

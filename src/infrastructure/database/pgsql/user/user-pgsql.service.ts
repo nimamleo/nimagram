@@ -9,6 +9,7 @@ import { HandleError } from '../../../../common/decorators/handler-error.decorat
 import { GenericErrorCode } from '../../../../common/errors/generic-error';
 import { ContactEntity } from './entities/contact.entity';
 import { UserBlockEntity } from './entities/user-block.entity';
+import { ConversationMemberEntity } from '../chat/entities/conversation-member.entity';
 
 @Injectable()
 export class UserPgsqlService implements IUserProvider {
@@ -35,9 +36,9 @@ export class UserPgsqlService implements IUserProvider {
   async getUser(phone: string): Promise<Result<IUserEntity>> {
     const res = await this.userRepository
       .createQueryBuilder('u')
+      .leftJoinAndSelect('u.conversations', 'cm', 'cm.userId = u.id')
       .where('u.phone = :phone', { phone: phone })
       .getOne();
-
     if (!res) {
       return Err('user not found', GenericErrorCode.NOT_FOUND);
     }

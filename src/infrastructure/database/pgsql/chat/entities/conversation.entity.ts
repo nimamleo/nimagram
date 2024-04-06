@@ -1,6 +1,7 @@
 import {
   Column,
   CreateDateColumn,
+  DeleteDateColumn,
   Entity,
   JoinTable,
   ManyToMany,
@@ -53,6 +54,9 @@ export class ConversationEntity extends CoreEntity {
   @UpdateDateColumn()
   updatedAt: Date;
 
+  @DeleteDateColumn()
+  deletedAt: Date;
+
   static fromIConversation(iConversation: IConversation): ConversationEntity {
     if (!iConversation) {
       return null;
@@ -86,7 +90,7 @@ export class ConversationEntity extends CoreEntity {
       description: conversation.description,
       notSeen: conversation.notSeen,
       chats: [],
-      members: conversation.members.map((x) => {
+      members: conversation?.members?.map((x) => {
         return x
           ? ConversationMemberEntity.toIConversationMemberEntity(x)
           : null;

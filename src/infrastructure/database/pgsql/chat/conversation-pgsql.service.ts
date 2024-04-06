@@ -14,6 +14,8 @@ import { DataSource, Repository } from 'typeorm';
 import { ConversationMemberEntity } from './entities/conversation-member.entity';
 import { GenericErrorCode } from '../../../../common/errors/generic-error';
 import { UserEntity } from '../user/entities/user.entity';
+import { ChatEntity } from './entities/chat.entity';
+import { ExtractJwt } from 'passport-jwt';
 
 @Injectable()
 export class ConversationPgsqlService implements IConversationProvider {
@@ -24,6 +26,9 @@ export class ConversationPgsqlService implements IConversationProvider {
     private readonly conversationMemberRepository: Repository<ConversationMemberEntity>,
     @InjectRepository(UserEntity)
     private readonly userRepository: Repository<UserEntity>,
+    @InjectRepository(ChatEntity)
+    private readonly chatRepository: Repository<ChatEntity>,
+
     @InjectDataSource()
     private readonly dataSource: DataSource,
   ) {}
@@ -33,6 +38,7 @@ export class ConversationPgsqlService implements IConversationProvider {
     userId: string,
     targetUserId: string,
   ): Promise<Result<IConversationEntity>> {
+    console.log(userId, targetUserId);
     const res = await this.conversationMemberRepository
       .createQueryBuilder('cm')
       .leftJoin('cm.conversation', 'c', 'cm.conversation = c.id')
@@ -61,6 +67,8 @@ export class ConversationPgsqlService implements IConversationProvider {
       return Err('conversation not found', GenericErrorCode.NOT_FOUND);
     }
 
+    console.log(res);
+
     const conversation = new ConversationEntity();
     conversation.id = res.conversationId;
     conversation.name = res.c_name;
@@ -77,17 +85,37 @@ export class ConversationPgsqlService implements IConversationProvider {
     return Ok(ConversationEntity.toIConversationEntity(conversation));
   }
 
-  getConversationById(
+  @HandleError
+  async getConversationById(
     conversationId: string,
   ): Promise<Result<IConversationEntity>> {
-    return;
+    const res = await this.conversationRepository
+      .createQueryBuilder('c')
+      .where('c.id = :id', { id: +conversationId })
+      .getOne();
+
+    if (!res) {
+      return Err('conversation not found', GenericErrorCode.NOT_FOUND);
+    }
+
+    return Ok(ConversationEntity.toIConversationEntity(res));
   }
-  getConversationChats(
+
+  @HandleError
+  async getConversationChats(
     conversationId: string,
     senderId: string,
     limitation: ILimitationOptions,
   ): Promise<Result<IChatEntity[]>> {
-    return;
+    console.log(conversationId);
+    const res = await this.chatRepository
+      .createQueryBuilder('c')
+      .where('c.conversationId = :id', { id: +conversationId })
+      .skip(limitation.skip)
+      .limit(limitation.limit)
+      .getMany();
+
+    return Ok(res.map((x) => ChatEntity.toIChatEntity(x)));
   }
 
   updateConversation(
@@ -96,68 +124,47 @@ export class ConversationPgsqlService implements IConversationProvider {
   ): Promise<Result<IConversationEntity>> {
     return;
   }
-  deleteConversation(conversationId: string): Promise<Result<boolean>> {
-    return;
+
+  @HandleError
+  async deleteConversation(conversationId: string): Promise<Result<boolean>> {
+    await this.dataSource.transaction(async (entityManager) => {
+      await entityManager
+        .createQueryBuilder()
+        .delete()
+        .from(ConversationMemberEntity)
+        .where('conversationId = :id', { id: conversationId })
+        .execute();
+
+      await entityManager
+        .createQueryBuilder()
+        .delete()
+        .from(ConversationEntity)
+        .where('id = :id', { id: conversationId })
+        .execute();
+    });
+    return Ok(true);
   }
 
   @HandleError
   async getConversationList(
     userId: string,
   ): Promise<Result<IConversationEntity[]>> {
-    const conversationMembers = await this.conversationRepository
-      .createQueryBuilder('c')
-      .leftJoinAndSelect(
-        'conversationMembers',
-        'cm',
-        'cm.conversationId = c.id',
-      )
-      .leftJoinAndSelect('user', 'u', 'u.id =  cm.userId')
-      .where((qb) => {
-        const subQuery = qb
-          .subQuery()
-          .select('cm2.conversationId')
-          .from('conversationMembers', 'cm2')
-          .where('cm2.userId = :userId')
-          .getQuery();
-
-        return 'c.id in' + subQuery;
-      })
-      .setParameter('userId', +userId)
-      .getRawMany();
-
-    const conversations: ConversationEntity[] = conversationMembers.map((x) => {
-      const conversation = new ConversationEntity();
-      conversation.id = x.c_id;
-      conversation.name = x.c_name;
-      conversation.image = x.c_image;
-      conversation.description = x.c_description;
-      conversation.type = x.c_type;
-      conversation.lastChat = x.c_lastChat;
-      conversation.notSeen = x.c_notSeen;
-      conversation.createdAt = x.c_createdAt;
-      conversation.updatedAt = x.c_updatedAt;
-
-      const memeber = new UserEntity();
-      memeber.id = x.u_id;
-      memeber.name = x.u_name;
-      memeber.username = x.u_username;
-      memeber.avatar = x.u_avatar;
-      memeber.bio = x.u_bio;
-      memeber.phone = x.u_phone;
-      memeber.lastOnline = x.u_lastOnline;
-      memeber.createdAt = x.u_createdAt;
-      memeber.updatedAt = x.u_updatedAt;
-
-      const conversationMember = new ConversationMemberEntity();
-      conversationMember.user = memeber;
-
-      conversation.members = [conversationMember];
-      return conversation;
-    });
-
-    return;
+    // const res1 = await this.userRepository.findOne({
+    //   where: { id: +userId },
+    //   relations: ['conversations.conversation.members.user'],
+    // });
+    const res = await this.userRepository
+      .createQueryBuilder('u')
+      .leftJoinAndSelect('u.conversations', 'c', 'u.id = c.userId')
+      .leftJoinAndSelect('c.conversation', 'cm')
+      .leftJoinAndSelect('cm.members', 'cm2')
+      .leftJoinAndSelect('cm2.user', 'cm3')
+      .where('u.id = :userId', { userId: +userId })
+      .getOne();
     return Ok(
-      conversations.map((x) => ConversationEntity.toIConversationEntity(x)),
+      res.conversations.map((x) =>
+        ConversationEntity.toIConversationEntity(x.conversation),
+      ),
     );
   }
 
@@ -200,13 +207,19 @@ export class ConversationPgsqlService implements IConversationProvider {
   ): Promise<Result<boolean>> {
     return;
   }
-  sendChat(
+
+  @HandleError
+  async sendChat(
     userId: string,
     targetUserId: string,
-    iConversationEntity: Partial<IConversationEntity>,
     iChat: IChat,
   ): Promise<Result<IChatEntity>> {
-    return;
+    const newChat = ChatEntity.fromIChat(iChat);
+    const res = await this.chatRepository.save(newChat);
+    if (!res) {
+      return Err('create chat failed');
+    }
+    return Ok(ChatEntity.toIChatEntity(res));
   }
   getChat(chatId: string, senderId: string): Promise<Result<IChatEntity>> {
     return;
@@ -233,35 +246,26 @@ export class ConversationPgsqlService implements IConversationProvider {
   }
 
   @HandleError
-  async getConversationReverse(
-    conversationId: string,
-    userId: string,
-  ): Promise<Result<IConversationEntity>> {
-    const res = await this.conversationRepository
+  async getConversationNotSeenCount(
+    conversationIds: string[],
+  ): Promise<Result<Partial<IConversationEntity>[]>> {
+    const data = await this.conversationRepository
       .createQueryBuilder('c')
-      .leftJoinAndSelect(
-        'conversationMembers',
-        'cm',
-        'c.id = cm.conversationId',
-      )
-      .leftJoinAndSelect('user', 'u', 'u.id = cm.userId')
-      .where('cm.conversationId = :conversationId and cm.userId != :userId', {
-        conversationId: +conversationId,
-        userId: +userId,
+      .select(['c.id', 'COUNT(ch.id) AS unseenCount'])
+      .leftJoin('c.chats', 'ch', 'ch.conversationId = c.id')
+      .where('ch.seen = :seen and c.id = ANY(:conversationIds) ', {
+        seen: false,
+        conversationIds: conversationIds.map((x) => +x),
       })
-      .getRawOne();
-
-    const conversation = new ConversationEntity();
-    conversation.id = res.c_id;
-    conversation.name = res.u_name;
-    conversation.image = res.u_avatar;
-    conversation.type = res.c_type;
-    conversation.lastChat = res.c_lastChat;
-    conversation.notSeen = res.c_notSeen;
-    conversation.description = res.c_description;
-    conversation.createdAt = res.c_createdAt;
-    conversation.updatedAt = res.c_updatedAt;
-
-    return Ok(ConversationEntity.toIConversationEntity(conversation));
+      .groupBy('c.id')
+      .getRawMany();
+    return Ok(
+      data.map((x) =>
+        ConversationEntity.toIConversationEntity({
+          id: x.c_id.toString(),
+          notSeen: x.unseencount,
+        }),
+      ),
+    );
   }
 }

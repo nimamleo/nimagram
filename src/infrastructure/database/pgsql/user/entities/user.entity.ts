@@ -12,6 +12,7 @@ import { ContactEntity } from './contact.entity';
 import { ConversationMemberEntity } from '../../chat/entities/conversation-member.entity';
 import { IUser, IUserEntity } from '../../../../../models/user/user.model';
 import { ChatEntity } from '../../chat/entities/chat.entity';
+import { ConversationEntity } from '../../chat/entities/conversation.entity';
 
 @Entity({ name: 'user' })
 export class UserEntity extends CoreEntity {
@@ -99,7 +100,11 @@ export class UserEntity extends CoreEntity {
       lastOnline: user.lastOnline,
       rfToken: user.rfToken,
       blockedUsers: [],
-      conversations: [],
+      conversations: user?.conversations
+        ? user.conversations.map((x) =>
+            ConversationMemberEntity.toIConversationMemberEntity(x),
+          )
+        : [],
       contacts: [],
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,

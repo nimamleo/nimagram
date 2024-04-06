@@ -7,8 +7,6 @@ export class GetConversationListRequest {
   pageSize: number;
   @IsNotEmpty()
   conversationId: string;
-  @IsNotEmpty()
-  targetUserId: string;
 }
 export class GetConversationChats {
   id: string;

@@ -21,10 +21,9 @@ export interface IConversationReader {
   getConversationById(
     conversationId: string,
   ): Promise<Result<IConversationEntity>>;
-  getConversationReverse(
-    conversationId: string,
-    userId: string,
-  ): Promise<Result<IConversationEntity>>;
+  getConversationNotSeenCount(
+    conversationIds: string[],
+  ): Promise<Result<Partial<IConversationEntity>[]>>;
 }
 export interface IConversationWriter {
   startConversation(
@@ -36,7 +35,6 @@ export interface IConversationWriter {
   sendChat(
     userId: string,
     targetUserId: string,
-    iConversationEntity: Partial<IConversationEntity>,
     iChat: IChat,
   ): Promise<Result<IChatEntity>>;
   editChat(

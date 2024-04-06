@@ -48,6 +48,7 @@ export class ConversationService {
       userId,
       targetUserId,
     );
+    console.log(res);
     if (res.isError()) {
       return Err(res.err, GenericErrorCode.INTERNAL);
     }
@@ -64,11 +65,40 @@ export class ConversationService {
       return Err(res.err, GenericErrorCode.INTERNAL);
     }
 
+    const seenResult =
+      await this.conversationRepository.getConversationNotSeenCount(
+        res.value.map((x) => x.id),
+      );
+
+    res.value.map((x) => {
+      for (const i of seenResult.value) {
+        if (x.id == i.id) {
+          x.notSeen = i.notSeen;
+        }
+      }
+    });
+
     return Ok(res.value);
   }
 
   @HandleError
-  async deleteConversation(conversationId: string): Promise<Result<boolean>> {
+  async deleteConversation(
+    conversationId: string,
+    userId: string,
+  ): Promise<Result<boolean>> {
+    const userConversationList = await this.getConversationList(userId);
+    if (userConversationList.isError()) {
+      return Err(userConversationList.err);
+    }
+
+    if (
+      !userConversationList.value
+        .map((x) => x.id)
+        .includes(conversationId.toString())
+    ) {
+      return Err('delete conversation failed');
+    }
+
     const res =
       await this.conversationRepository.deleteConversation(conversationId);
     if (res.isError()) {
@@ -82,13 +112,11 @@ export class ConversationService {
   async sendChat(
     userId: string,
     targetUserId: string,
-    iConversationEntity: Partial<IConversationEntity>,
     iChat: IChat,
   ): Promise<Result<IChatEntity>> {
     const res = await this.conversationRepository.sendChat(
       userId,
       targetUserId,
-      iConversationEntity,
       iChat,
     );
 
@@ -255,6 +283,20 @@ export class ConversationService {
       conversationId,
       userId,
     );
+
+    if (res.isError()) {
+      return Err(res.err);
+    }
+
+    return Ok(res.value);
+  }
+
+  @HandleError
+  async getConversationById(
+    conversationId: string,
+  ): Promise<Result<IConversationEntity>> {
+    const res =
+      await this.conversationRepository.getConversationById(conversationId);
 
     if (res.isError()) {
       return Err(res.err);

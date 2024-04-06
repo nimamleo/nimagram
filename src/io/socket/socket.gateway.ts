@@ -69,6 +69,7 @@ import {
   DeleteChatGroupResponse,
 } from './model/delete-chat-group.model';
 import { SeenChatRequest, SeenChatResponse } from './model/seen-chat.model';
+import { IConversationMemberEntity } from '../../models/chat/conversation-member.model';
 
 @WebSocketGateway(8080, {
   cors: { origin: ['https://admin.socket.io'], credentials: true },
@@ -221,19 +222,29 @@ export class SocketGateway
     @MessageBody() msg: ConversationListRequest,
     @GetUserWs() user: IUserEntity,
   ) {
-    const res = await this.conversationService.getConversationList(user.id);
-    if (res.isError()) {
-      return StdResponse.fromResult(Err(res.err));
+    const conversationList = await this.conversationService.getConversationList(
+      user.id,
+    );
+    if (conversationList.isError()) {
+      return StdResponse.fromResult(Err(conversationList.err));
+    }
+    const userRes = await this.userService.getUserById(user.id);
+    if (userRes.isError()) {
+      return StdResponse.fromResult(Err(userRes.err));
     }
 
-    // res.value.map((x) => {
-    //   console.log(x);
-    // });
-    // return;
+    for (const conversation of conversationList.value) {
+      conversation.members.map((member: IConversationMemberEntity) => {
+        if (member.user.id !== user.id) {
+          conversation.name = member.user.name;
+          conversation.image = member.user.avatar;
+        }
+      });
+    }
 
     return StdResponse.fromResult(
       Ok<ConversationListResponse>({
-        list: res.value.map((x) => ({
+        list: conversationList.value.map((x) => ({
           id: x.id,
           name: x.name,
           image: x.image,
@@ -247,9 +258,13 @@ export class SocketGateway
   }
 
   @SubscribeMessage('delete.conversation')
-  async deleteConversation(@MessageBody() msg: DeleteConversationRequest) {
+  async deleteConversation(
+    @MessageBody() msg: DeleteConversationRequest,
+    @GetUserWs() user: IUserEntity,
+  ) {
     const res = await this.conversationService.deleteConversation(
       msg.conversationId,
+      user.id,
     );
     if (res.isError()) {
       return StdResponse.fromResult(Err(res.err));
@@ -278,7 +293,25 @@ export class SocketGateway
         }
       }
     }
-
+    if (
+      conversation.isError() &&
+      conversation.err.code === GenericErrorCode.NOT_FOUND
+    ) {
+      conversation = await this.conversationService.startConversation(
+        user.id,
+        msg.targetUserId,
+        {
+          name: user.name,
+          description: null,
+          type: ConversationType.DIRECT,
+          notSeen: 0,
+          image: user.avatar,
+          lastChat: new Date(),
+          chats: [],
+          members: [],
+        },
+      );
+    }
     const targetUser = await this.userService.getUserById(msg.targetUserId);
     if (targetUser.isError()) {
       return StdResponse.fromResult(Err(targetUser.err));
@@ -288,22 +321,14 @@ export class SocketGateway
       user.id,
       msg.targetUserId,
       {
-        id: msg.conversationId || conversation?.value?.id || msg.targetUserId,
-        name: targetUser.value.name,
-        image: targetUser.value.avatar,
-        description: undefined,
-        type: ConversationType.DIRECT,
-        lastChat: new Date(),
-      },
-      {
         content: msg.content,
         type: ChatType.MESSAGE,
         seen: false,
-        filePath: undefined,
+        filePath: null,
         isEdited: false,
         isDeleted: false,
         sender: { id: user.id },
-        conversation: { id: msg.conversationId },
+        conversation: { id: msg.conversationId || conversation.value.id },
         deletedBy: undefined,
       },
     );
@@ -347,9 +372,8 @@ export class SocketGateway
   ) {
     const pagination = new PaginationHelper(msg.page, msg.pageSize);
 
-    const conversation = await this.conversationService.getConversationByUsers(
-      user.id,
-      msg.targetUserId,
+    const conversation = await this.conversationService.getConversationById(
+      msg.conversationId,
     );
     if (conversation.isError()) {
       return StdResponse.fromResult(Err(conversation.err));
