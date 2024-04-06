@@ -226,6 +226,11 @@ export class SocketGateway
       return StdResponse.fromResult(Err(res.err));
     }
 
+    // res.value.map((x) => {
+    //   console.log(x);
+    // });
+    // return;
+
     return StdResponse.fromResult(
       Ok<ConversationListResponse>({
         list: res.value.map((x) => ({

@@ -84,7 +84,7 @@ export class UserEntity extends CoreEntity {
     return user;
   }
 
-  static toIUserEntity(user: UserEntity): IUserEntity {
+  static toIUserEntity(user: Partial<UserEntity>): IUserEntity {
     if (!user) {
       return null;
     }

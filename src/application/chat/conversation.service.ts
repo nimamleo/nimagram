@@ -12,6 +12,7 @@ import { Err, Ok, Result } from '../../common/result';
 import { GenericErrorCode } from '../../common/errors/generic-error';
 import { IChat, IChatEntity } from '../../models/chat/chat.model';
 import { ILimitationOptions } from '../../common/pagination/limitation.interface';
+import { logLevel } from '@nestjs/microservices/external/kafka.interface';
 
 @Injectable()
 export class ConversationService {
@@ -62,16 +63,6 @@ export class ConversationService {
     if (res.isError()) {
       return Err(res.err, GenericErrorCode.INTERNAL);
     }
-    console.log(res);
-
-    // res.value.map(
-    //   async (x) =>
-    //     await this.conversationRepository.getConversationReverse(x.id, userId),
-    // );
-
-    console.log(res);
-
-    // const nima = this.conversationRepository.getUnSeenCount(res.value[0].id);
 
     return Ok(res.value);
   }

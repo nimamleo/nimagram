@@ -71,7 +71,7 @@ export class ConversationEntity extends CoreEntity {
   }
 
   static toIConversationEntity(
-    conversation: ConversationEntity,
+    conversation: Partial<ConversationEntity>,
   ): IConversationEntity {
     if (!conversation) {
       return null;
@@ -86,7 +86,11 @@ export class ConversationEntity extends CoreEntity {
       description: conversation.description,
       notSeen: conversation.notSeen,
       chats: [],
-      members: [],
+      members: conversation.members.map((x) => {
+        return x
+          ? ConversationMemberEntity.toIConversationMemberEntity(x)
+          : null;
+      }),
       createdAt: conversation.createdAt,
       updatedAt: conversation.updatedAt,
     };

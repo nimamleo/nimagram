@@ -32,4 +32,24 @@ export class ConversationMemberEntity extends BaseEntity {
 
     return conversationMember;
   }
+
+  static toIConversationMemberEntity(
+    conversationMember: ConversationMemberEntity,
+  ): IConversationMemberEntity {
+    if (!conversationMember) {
+      return null;
+    }
+
+    return {
+      id: conversationMember.id ? conversationMember.id.toString() : null,
+      conversation: conversationMember.conversation
+        ? ConversationEntity.toIConversationEntity(
+            conversationMember.conversation,
+          )
+        : null,
+      user: conversationMember.user
+        ? UserEntity.toIUserEntity(conversationMember.user)
+        : null,
+    };
+  }
 }
