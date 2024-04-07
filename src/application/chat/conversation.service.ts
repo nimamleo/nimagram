@@ -12,7 +12,7 @@ import { Err, Ok, Result } from '../../common/result';
 import { GenericErrorCode } from '../../common/errors/generic-error';
 import { IChat, IChatEntity } from '../../models/chat/chat.model';
 import { ILimitationOptions } from '../../common/pagination/limitation.interface';
-import { logLevel } from '@nestjs/microservices/external/kafka.interface';
+import { ConversationType } from '../../enum/conversation-type';
 
 @Injectable()
 export class ConversationService {
@@ -48,7 +48,6 @@ export class ConversationService {
       userId,
       targetUserId,
     );
-    console.log(res);
     if (res.isError()) {
       return Err(res.err, GenericErrorCode.INTERNAL);
     }
@@ -205,6 +204,15 @@ export class ConversationService {
     if (conversation.isError()) {
       return Err(conversation.err, GenericErrorCode.INTERNAL);
     }
+    const members =
+      await this.conversationRepository.getGroupMembers(conversationId);
+    if (members.isError()) {
+      return Err(members.err);
+    }
+
+    if (userIds.some((x) => members.value.includes(x))) {
+      return Ok(conversation.value);
+    }
     const res = await this.conversationRepository.addMemberToGroup(
       userIds,
       conversationId,
@@ -228,6 +236,9 @@ export class ConversationService {
     if (isGroupExist.isError()) {
       return Err(isGroupExist.err);
     }
+    if (isGroupExist.value.type !== ConversationType.GROUP) {
+      return Err('you can not send message to this conversation');
+    }
     const res = await this.conversationRepository.sendChatToGroup(
       senderId,
       groupId,
@@ -236,6 +247,8 @@ export class ConversationService {
     if (res.isError()) {
       return Err(res.err);
     }
+
+    res.value.conversation = isGroupExist.value;
 
     return Ok(res.value);
   }

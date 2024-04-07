@@ -59,7 +59,6 @@ export class UserService {
       return Err(targetUser.err, GenericErrorCode.INTERNAL);
     }
     const blockList = await this.userRepository.getBlockList(userId);
-    console.log();
     if (blockList.isError()) {
       return Err(blockList.err, GenericErrorCode.INTERNAL);
     }

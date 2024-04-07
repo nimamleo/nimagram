@@ -37,6 +37,7 @@ export class UserPgsqlService implements IUserProvider {
     const res = await this.userRepository
       .createQueryBuilder('u')
       .leftJoinAndSelect('u.conversations', 'cm', 'cm.userId = u.id')
+      .innerJoinAndSelect('cm.conversation', 'c')
       .where('u.phone = :phone', { phone: phone })
       .getOne();
     if (!res) {

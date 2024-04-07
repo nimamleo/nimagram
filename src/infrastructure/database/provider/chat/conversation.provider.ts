@@ -24,6 +24,7 @@ export interface IConversationReader {
   getConversationNotSeenCount(
     conversationIds: string[],
   ): Promise<Result<Partial<IConversationEntity>[]>>;
+  getGroupMembers(groupId: string): Promise<Result<string[]>>;
 }
 export interface IConversationWriter {
   startConversation(

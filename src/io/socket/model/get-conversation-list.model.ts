@@ -12,6 +12,7 @@ export class GetConversationChats {
   id: string;
   content: string;
   seen: boolean;
+  senderId: string;
   createdAt: string;
 }
 export class GetConversationListResponse {

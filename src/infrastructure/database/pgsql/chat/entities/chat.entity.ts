@@ -87,7 +87,7 @@ export class ChatEntity extends CoreEntity {
       filePath: chat.filePath,
       deletedBy: {},
       conversation: {},
-      sender: {},
+      sender: chat?.sender ? UserEntity.toIUserEntity(chat.sender) : {},
       createdAt: chat.createdAt,
       updatedAt: chat.updatedAt,
       deletedAt: chat.deletedAt,

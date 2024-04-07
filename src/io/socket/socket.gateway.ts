@@ -98,7 +98,14 @@ export class SocketGateway
     this.logger.debug(`user with socket id ${client.id} connected`);
     const token = await this.wsGuard.extractToken(client.request);
     const verifyRes = await this.wsGuard.verifyToken(token);
-    client.join(verifyRes.value.conversations.map((x) => x.id));
+    this.logger.debug(
+      `${verifyRes.value.name} joined to rooms with ids: ${verifyRes.value.conversations.map((x: IConversationMemberEntity) => x.conversation.id)}`,
+    );
+    client.join(
+      verifyRes.value.conversations.map(
+        (x: IConversationMemberEntity) => x.conversation.id,
+      ),
+    );
     client['user'] = verifyRes.value;
     if (verifyRes.isError()) client.disconnect();
   }
@@ -401,6 +408,7 @@ export class SocketGateway
           id: x.id,
           content: x.content,
           seen: x.seen,
+          senderId: x.sender.id,
           createdAt: x.createdAt.toISOString(),
         })),
       }),
@@ -459,6 +467,11 @@ export class SocketGateway
     @MessageBody() msg: CreateGroupRequest,
     @GetUserWs() user: IUserEntity,
   ) {
+    const secondUser = await this.userService.getUserById(msg.secondUserId);
+    if (secondUser.isError()) {
+      return StdResponse.fromResult(Err(secondUser.err));
+    }
+
     const res = await this.conversationService.startConversation(
       user.id,
       msg.secondUserId,
@@ -519,10 +532,10 @@ export class SocketGateway
         description: res.value.description,
         lastChat: res.value.lastChat.toISOString(),
         createdAt: res.value.createdAt.toISOString(),
-        members: res.value.members.map((x) => ({
-          id: x.id,
-          name: x.name,
-          username: x.username,
+        members: res.value.members.map((x: IConversationMemberEntity) => ({
+          id: x.user.id,
+          name: x.user.name,
+          username: x.user.username,
         })),
       }),
     );
