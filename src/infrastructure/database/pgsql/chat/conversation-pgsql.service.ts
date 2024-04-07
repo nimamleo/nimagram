@@ -152,10 +152,6 @@ export class ConversationPgsqlService implements IConversationProvider {
   async getConversationList(
     userId: string,
   ): Promise<Result<IConversationEntity[]>> {
-    // const res1 = await this.userRepository.findOne({
-    //   where: { id: +userId },
-    //   relations: ['conversations.conversation.members.user'],
-    // });
     const res = await this.userRepository
       .createQueryBuilder('u')
       .leftJoinAndSelect('u.conversations', 'c', 'u.id = c.userId')
