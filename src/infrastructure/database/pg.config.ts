@@ -25,6 +25,7 @@ export const postgresConfig = registerAsWithLog<
   if (!process.env.POSTGRES_DB) {
     throw Error('POSTGRES_DB not provided');
   }
+
   if (!process.env.POSTGRES_USERNAME) {
     throw Error('POSTGRES_USERNAME not provided');
   }
