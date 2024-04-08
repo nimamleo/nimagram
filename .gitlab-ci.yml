@@ -25,5 +25,7 @@ stage-deploy-job:
     - docker-compose -f docker-compose.yml pull
     - docker-compose -f docker-compose.yml up -d
     - docker system prune -a --force
+  tags:
+    - chat-app
   after_script:
     - docker logout $CI_REGISTRY
