@@ -4,8 +4,6 @@ services:
   app:
     image: "registry.go2tr.ir/nima.mahini/nimagram:${CI_PIPELINE_ID}"
     container_name: "chat"
-    depends_on:
-      - pg
     ports:
       - "3333:3333"
     networks:
