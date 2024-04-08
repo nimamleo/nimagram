@@ -2,15 +2,15 @@ FROM node:18-alpine
 RUN mkdir -p /backend
 WORKDIR /backend
 
-COPY ./package.json /backend
-COPY ./package-lock.json /backend
-
-RUN npm install
-
-COPY ./ /backed
+COPY . .
 
 RUN ls
+
+RUN npm install
 RUN npm run build
+
+
+
 
 EXPOSE 3333
 
