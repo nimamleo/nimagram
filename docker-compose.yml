@@ -1,3 +1,5 @@
+version: '3.8'
+
 services:
   app:
     image: "registry.go2tr.ir/nima.mahini/nimagram:${CI_PIPELINE_ID}"
@@ -14,7 +16,6 @@ services:
       - "5432:5432"
     volumes:
       - ./postgres-data:/var/lib/postgresql/data
-
 
 volumes:
   postgres_data:
