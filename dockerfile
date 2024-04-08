@@ -9,6 +9,7 @@ RUN npm install
 
 COPY ./ /backed
 
+RUN ls
 RUN npm run build
 
 EXPOSE 3333
