@@ -22,6 +22,7 @@ export const postgresConfig = registerAsWithLog<
   if (!process.env.POSTGRES_HOST) {
     throw Error('POSTGRES_HOST not provided');
   }
+
   if (!process.env.POSTGRES_DB) {
     throw Error('POSTGRES_DB not provided');
   }
