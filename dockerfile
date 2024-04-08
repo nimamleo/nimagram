@@ -7,7 +7,7 @@ COPY ./package-lock.json /backend
 
 RUN npm install
 
-COPY . /backed
+COPY ./ /backed
 
 RUN npm run build
 
