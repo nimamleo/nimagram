@@ -16,7 +16,7 @@ export const postgresConfig = registerAsWithLog<
   IPgConfig,
   ConfigFactory<IPgConfig>
 >(POSTGRES_CONFIG, () => {
-  if (!process.env.PG_PORT) {
+  if (!process.env.POSTGRES_PORT) {
     throw Error('POSTGRES_PORT not provided');
   }
   if (!process.env.POSTGRES_HOST) {
