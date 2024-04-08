@@ -8,8 +8,19 @@ services:
       - "3333:3333"
     networks:
       - rope
+      - web
+
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=web"
+      - "traefik.http.routers.nginx.entrypoints=http,https"
+      - "traefik.http.routers.nginx.rule=Host(`nima-chat.go2tr.work`)"
+      - "traefik.http.routers.nginx.tls.certresolver=letsencrypt"
+      - "traefik.http.services.nginx.loadbalancer.server.port=3010"
 
 
 networks:
   rope:
+    external: true
+  web:
     external: true
