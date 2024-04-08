@@ -8,11 +8,12 @@ import {
   IAppHttpConfig,
 } from './io/http/app-http.config';
 import { Logger, ValidationPipe } from '@nestjs/common';
+import { postgresConfig } from './infrastructure/database/pg.config';
 
 async function loadConfig(): Promise<ConfigService> {
   const appContext = await NestFactory.createApplicationContext(
     ConfigModule.forRoot({
-      load: [jwtConfig, appHttpConfig],
+      load: [jwtConfig, appHttpConfig, postgresConfig],
     }),
   );
 

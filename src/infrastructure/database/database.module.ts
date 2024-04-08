@@ -10,26 +10,35 @@ import { ConversationEntity } from './pgsql/chat/entities/conversation.entity';
 import { ConversationMemberEntity } from './pgsql/chat/entities/conversation-member.entity';
 import { ContactEntity } from './pgsql/user/entities/contact.entity';
 import { UserBlockEntity } from './pgsql/user/entities/user-block.entity';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { IPgConfig, POSTGRES_CONFIG } from './pg.config';
 
 @Module({
   imports: [
-    TypeOrmModule.forRoot({
-      type: 'postgres',
-      host: '127.0.0.1',
-      port: 5432,
-      username: 'postgres',
-      password: 'root',
-      database: 'nimagram_typeorm',
-      entities: [
-        UserEntity,
-        ChatEntity,
-        ConversationEntity,
-        ConversationMemberEntity,
-        ContactEntity,
-        UserBlockEntity,
-      ],
-      synchronize: true,
-      // autoLoadEntities: true,
+    TypeOrmModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => {
+        const dbConfig = configService.get<IPgConfig>(POSTGRES_CONFIG);
+        return {
+          type: 'postgres',
+          host: dbConfig.host,
+          port: dbConfig.port,
+          username: dbConfig.username,
+          password: dbConfig.password,
+          database: dbConfig.db_name,
+          entities: [
+            UserEntity,
+            ChatEntity,
+            ConversationEntity,
+            ConversationMemberEntity,
+            ContactEntity,
+            UserBlockEntity,
+          ],
+          synchronize: true,
+          // autoLoadEntities: true,
+        };
+      },
     }),
     TypeOrmModule.forFeature([
       UserEntity,
