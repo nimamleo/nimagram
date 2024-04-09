@@ -37,7 +37,7 @@ export const postgresConfig = registerAsWithLog<
   return {
     port: +process.env.POSTGRES_PORT,
     host: process.env.POSTGRES_HOST,
-    db_name: process.env.POSTGRES_NAME,
+    db_name: process.env.POSTGRES_DB,
     username: process.env.POSTGRES_USERNAME,
     password: process.env.POSTGRES_PASSWORD,
   };
