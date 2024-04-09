@@ -35,8 +35,8 @@ import { IPgConfig, POSTGRES_CONFIG } from './pg.config';
             ContactEntity,
             UserBlockEntity,
           ],
-          // synchronize: true,
-          // autoLoadEntities: true,
+          synchronize: true,
+          autoLoadEntities: true,
         };
       },
     }),
