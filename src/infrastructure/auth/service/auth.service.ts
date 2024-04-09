@@ -54,6 +54,7 @@ export class AuthService implements IAuthProvider {
     const userInToken = await this.jwtService.verify(token, {
       secret: this.jwtConfig.secret,
     });
+    console.log(userInToken);
 
     if (!userInToken) {
       return Err('token is not valid');
@@ -63,6 +64,7 @@ export class AuthService implements IAuthProvider {
     if (user.isError()) {
       return Err('unauthorized');
     }
+    console.log(user);
 
     return Ok(user.value);
   }

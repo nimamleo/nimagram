@@ -107,7 +107,6 @@ export class SocketGateway
     const token = await this.wsGuard.extractToken(client.request);
     console.log(token);
     const verifyRes = await this.wsGuard.verifyToken(token);
-    console.log(verifyRes);
     this.logger.debug(
       `${verifyRes.value.name} joined to rooms with ids: ${verifyRes.value.conversations.map((x: IConversationMemberEntity) => x.conversation.id)}`,
     );
