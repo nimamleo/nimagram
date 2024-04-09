@@ -9,11 +9,12 @@ import {
 } from './io/http/app-http.config';
 import { Logger, ValidationPipe } from '@nestjs/common';
 import { postgresConfig } from './infrastructure/database/pg.config';
+import { socketConfig } from './io/socket/socket.config';
 
 async function loadConfig(): Promise<ConfigService> {
   const appContext = await NestFactory.createApplicationContext(
     ConfigModule.forRoot({
-      load: [jwtConfig, appHttpConfig, postgresConfig],
+      load: [jwtConfig, appHttpConfig, postgresConfig, socketConfig],
     }),
   );
 

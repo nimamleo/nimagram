@@ -7,6 +7,7 @@ COPY . .
 RUN npm install
 RUN npm run build
 
-EXPOSE 3333
+EXPOSE ${HTTP_PORT}
+EXPOSE ${SOCKET_PORT}
 
 CMD ["npm", "run", "start:prod"]
