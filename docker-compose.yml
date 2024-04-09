@@ -19,9 +19,9 @@ services:
       - "traefik.http.routers.chat.tls.certresolver=letsencrypt"
       - "traefik.http.services.chat.loadbalancer.server.port=3333"
 
-      - "traefik.http.routers.chat-socket.entrypoints=http,https"
-      - "traefik.http.routers.chat-socket.rule=Host(`nima-chat.go2tr.work`)"
-      - "traefik.http.routers.chat-socket.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.chat-socket.entrypoints=http"
+#      - "traefik.http.routers.chat-socket.rule=Host(`nima-chat.go2tr.work`)"
+#      - "traefik.http.routers.chat-socket.tls.certresolver=letsencrypt"
       - "traefik.http.services.chat-socket.loadbalancer.server.port=8080"
 
 
