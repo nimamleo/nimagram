@@ -15,11 +15,10 @@ services:
       - "traefik.enable=true"
       - "traefik.docker.network=web"
       - "traefik.http.routers.chat.entrypoints=http,https"
-#      - "traefik.http.routers.chat.rule=Host(`nima-chat.go2tr.work`)"
       - "traefik.http.routers.chat.tls.certresolver=letsencrypt"
-#      - "traefik.http.services.chat.loadbalancer.server.port=3333"
       - "traefik.http.routers.chat.rule=Host(`nima-chat.go2tr.work`)"
       - "traefik.http.services.chat.loadbalancer.server.port=8080"
+      - "traefik.http.services.chat.loadbalancer.server.port=3333"
 
 
 

@@ -103,6 +103,7 @@ export class SocketGateway
   }
 
   async handleConnection(client: Socket) {
+    console.log(client.request);
     this.logger.debug(`user with socket id ${client.id} connected`);
     const token = await this.wsGuard.extractToken(client.request);
     const verifyRes = await this.wsGuard.verifyToken(token);
