@@ -70,8 +70,10 @@ import {
 } from './model/delete-chat-group.model';
 import { SeenChatRequest, SeenChatResponse } from './model/seen-chat.model';
 import { IConversationMemberEntity } from '../../models/chat/conversation-member.model';
+import { ConfigService } from '@nestjs/config';
+import { ISocketConfig, SOCKET_CONFIG } from './socket.config';
 
-@WebSocketGateway(8080, {
+@WebSocketGateway({
   cors: { origin: ['https://admin.socket.io'], credentials: true },
 })
 export class SocketGateway
@@ -79,15 +81,21 @@ export class SocketGateway
 {
   @WebSocketServer()
   private readonly server: Server;
+  private readonly socketPort: number;
 
   constructor(
     private readonly wsGuard: WsGuard,
     private readonly userService: UserService,
     private readonly conversationService: ConversationService,
-  ) {}
+    private readonly configService: ConfigService,
+  ) {
+    const socketConfig = this.configService.get<ISocketConfig>(SOCKET_CONFIG);
+    this.socketPort = socketConfig.port;
+  }
   private readonly logger = new Logger(SocketGateway.name);
-  afterInit() {
-    this.logger.debug('gateway init');
+  afterInit(server: Server) {
+    this.server.listen(this.socketPort);
+    this.logger.debug(`gateway init listing on port ${this.socketPort} `);
     instrument(this.server, {
       auth: false,
       mode: 'development',
